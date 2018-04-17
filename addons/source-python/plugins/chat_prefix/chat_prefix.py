@@ -12,16 +12,17 @@ import warnings
 # Source.Python
 from colors import *
 from core import GAME_NAME
-from filters.recipients import RecipientFilter
 from listeners.tick import Delay
 from messages import SayText2
 from messages.hooks import HookUserMessage
-from paths import PLUGIN_DATA_PATH
 from players.entity import Player
-from steam import SteamID
 from translations.strings import LangStrings
 
 # Plugin
+from .config import (
+    CHAT_HOOK_CONFIG_FILE, fix_escaped_prefix_characters,
+    get_user_and_permissions_prefixes,
+)
 from .info import info
 
 
@@ -31,28 +32,22 @@ from .info import info
 CHAT_STRINGS = LangStrings(f'{info.name}/strings')
 LOCATION_STRINGS = LangStrings(f'{info.name}/locations')
 
-with (PLUGIN_DATA_PATH / info.name + '.json').open() as _json:
+with CHAT_HOOK_CONFIG_FILE.open() as _json:
     CHAT_HOOK_CONFIG = json.load(_json)
 
-user_prefixes = {}
-permission_prefixes = {}
-for prefix, group in CHAT_HOOK_CONFIG['groups'].items():
-    for value in group.get('users', []):
-        try:
-            user_prefixes[SteamID.parse(str(value)).to_uint64()] = prefix
-        except ValueError:
-            warnings.warn(f'Invalid SteamID value "{value}".')
-    permission = group.get('permission')
-    if permission:
-        permission_prefixes[permission] = prefix
+USER_PREFIXES, PERMISSION_PREFIXES = get_user_and_permissions_prefixes(
+    CHAT_HOOK_CONFIG
+)
 
-for color, value in CHAT_HOOK_CONFIG.get('colors', {}).items():
+fix_escaped_prefix_characters(CHAT_HOOK_CONFIG)
+
+for _color, _value in CHAT_HOOK_CONFIG.get('colors', {}).items():
     try:
-        globals()[color] = Color(*map(int, value.split(',')))
+        globals()[_color] = Color(*map(int, _value.split(',')))
     except ValueError:
-        warnings.warn(f'Invalid Color value "{value}".')
+        warnings.warn(f'Invalid Color value "{_value}".')
 
-valid_colors = {k: v for k, v in globals().items() if isinstance(v, Color)}
+VALID_COLORS = {k: v for k, v in globals().items() if isinstance(v, Color)}
 
 
 # =============================================================================
@@ -60,45 +55,62 @@ valid_colors = {k: v for k, v in globals().items() if isinstance(v, Color)}
 # =============================================================================
 @HookUserMessage('SayText' if GAME_NAME == 'dod' else 'SayText2')
 def _saytext2_hook(recipients, data):
+    """Hook SayText2 for chat messages to send a modified version."""
     key = data.message
-    print(data)
-    if not key in CHAT_STRINGS.keys():
+
+    # Is this message from a player sending chat?
+    if key not in CHAT_STRINGS.keys():
         return
 
+    # Does the chatting player belong to any group?
     index = data.index
-    prefix = _get_prefix(index)
-    if prefix is None:
+    group = _get_group(index)
+    if group is None:
         return
 
-    full_prefix = CHAT_HOOK_CONFIG['groups'][prefix]['prefix']
+    full_prefix = CHAT_HOOK_CONFIG['groups'][group]['prefix']
     tokens = {
         'data': data,
-        'prefix': full_prefix.format(**valid_colors),
+        'prefix': full_prefix.format(**VALID_COLORS),
     }
+
+    # Add the location information if it is needed
     location = LOCATION_STRINGS.get(data.param3, data.param3)
     if location:
         tokens['location'] = location
+
+    # Use a delay to avoid crashing the server
     Delay(0, _send_new_message, (key, index, list(recipients)), tokens)
+
+    # Remove all recipients for the current message to block it
     recipients.remove_all_players()
 
 
 # =============================================================================
 # >> HELPER FUNCTIONS
 # =============================================================================
-def _get_prefix(index):
+def _get_group(index):
+    """Return the group to use for the given player."""
     player = Player(index)
+    player.permissions.add('chat.admin')
     steamid = player.raw_steamid.to_uint64()
-    if steamid in user_prefixes:
-        return user_prefixes[steamid]
+
+    # Is the player hard-coded into the config?
+    if steamid in USER_PREFIXES:
+        return USER_PREFIXES[steamid]
+
+    # Does the player carry the permission of any group?
     permissions = player.permissions
     permissions.add('chat.moderator')
-    for permission, prefix in permission_prefixes.items():
+    for permission, prefix in PERMISSION_PREFIXES.items():
         if permission in permissions:
             return prefix
+
     return None
 
 
 def _send_new_message(key, index, *ply_indexes, **tokens):
+    """Send the message to the given players."""
     message = SayText2(
         message=CHAT_STRINGS[key],
         index=index,
