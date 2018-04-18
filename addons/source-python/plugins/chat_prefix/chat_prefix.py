@@ -15,6 +15,7 @@ from core import GAME_NAME
 from listeners.tick import Delay
 from messages import SayText2
 from messages.hooks import HookUserMessage
+from paths import TRANSLATION_PATH
 from players.entity import Player
 from translations.strings import LangStrings
 
@@ -29,7 +30,10 @@ from .info import info
 # =============================================================================
 # >> GLOBAL VARIABLES
 # =============================================================================
-CHAT_STRINGS = LangStrings(f'{info.name}/strings')
+if (TRANSLATION_PATH / info.name / GAME_NAME + '_strings.ini').isfile():
+    CHAT_STRINGS = LangStrings(f'{info.name}/{GAME_NAME}_strings')
+else:
+    CHAT_STRINGS = LangStrings(f'{info.name}/strings')
 LOCATION_STRINGS = LangStrings(f'{info.name}/locations')
 
 with CHAT_HOOK_CONFIG_FILE.open() as _json:
@@ -53,7 +57,7 @@ VALID_COLORS = {k: v for k, v in globals().items() if isinstance(v, Color)}
 # =============================================================================
 # >> USER MESSAGE HOOKS
 # =============================================================================
-@HookUserMessage('SayText' if GAME_NAME == 'dod' else 'SayText2')
+@HookUserMessage('SayText2')
 def _saytext2_hook(recipients, data):
     """Hook SayText2 for chat messages to send a modified version."""
     key = data.message
@@ -92,7 +96,6 @@ def _saytext2_hook(recipients, data):
 def _get_group(index):
     """Return the group to use for the given player."""
     player = Player(index)
-    player.permissions.add('chat.admin')
     steamid = player.raw_steamid.to_uint64()
 
     # Is the player hard-coded into the config?
