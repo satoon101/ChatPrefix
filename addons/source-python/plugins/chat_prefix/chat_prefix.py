@@ -104,7 +104,6 @@ def _get_group(index):
 
     # Does the player carry the permission of any group?
     permissions = player.permissions
-    permissions.add('chat.moderator')
     for permission, prefix in PERMISSION_PREFIXES.items():
         if permission in permissions:
             return prefix
