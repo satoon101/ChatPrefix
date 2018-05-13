@@ -46,8 +46,10 @@ def get_user_and_permissions_prefixes(config):
 
 def fix_escaped_prefix_characters(config):
     """Update all prefixes to fix any escaped characters."""
-    for v in config['groups'].values():
-        v['prefix'] = LangStrings._replace_escaped_sequences(v['prefix'])
+    for group in config['groups'].values():
+        group['prefix'] = LangStrings._replace_escaped_sequences(
+            group['prefix']
+        )
 
 
 # =============================================================================
