@@ -8,6 +8,8 @@ ignore=
 # For a list of error codes, see:
 #   http://pylint-messages.wikidot.com/all-codes
 disable=
+    import-error,
+    no-name-in-module
 
 
 [BASIC]
@@ -15,13 +17,13 @@ disable=
 module-rgx=[a-z_][a-z0-9_]{2,30}$
 
 # Constant name regex
-const-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+const-rgx=[A-Z_][A-Z0-9_]{2,30}|[a-z_][a-z0-9_]{2,30}$
 
 # Class name regex
 class-rgx=[A-Z_][a-zA-Z0-9]+$
 
 # Function name regex
-function-rgx=[a-z_][a-z0-9_]{2,30}$
+function-rgx=[a-z_][a-z0-9_]{2,34}$
 
 # Method name regex
 method-rgx=[a-z_][a-z0-9_]{2,30}$
