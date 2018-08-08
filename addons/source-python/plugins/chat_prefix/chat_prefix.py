@@ -11,31 +11,22 @@ import warnings
 
 # Source.Python
 from colors import *
-from core import GAME_NAME
 from listeners.tick import Delay
 from messages import SayText2
 from messages.hooks import HookUserMessage
-from paths import TRANSLATION_PATH
 from players.entity import Player
-from translations.strings import LangStrings
 
 # Plugin
 from .config import (
     CHAT_HOOK_CONFIG_FILE, fix_escaped_prefix_characters,
     get_user_and_permissions_prefixes,
 )
-from .info import info
+from .strings import CHAT_STRINGS, LOCATION_STRINGS
 
 
 # =============================================================================
 # >> GLOBAL VARIABLES
 # =============================================================================
-if (TRANSLATION_PATH / info.name / GAME_NAME + '_strings.ini').isfile():
-    CHAT_STRINGS = LangStrings(f'{info.name}/{GAME_NAME}_strings')
-else:
-    CHAT_STRINGS = LangStrings(f'{info.name}/strings')
-LOCATION_STRINGS = LangStrings(f'{info.name}/locations')
-
 with CHAT_HOOK_CONFIG_FILE.open() as _json:
     CHAT_HOOK_CONFIG = json.load(_json)
 
