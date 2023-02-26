@@ -10,7 +10,7 @@ import json
 import warnings
 
 # Source.Python
-from colors import *
+from colors import *  # pylint: disable=wildcard-import
 from listeners.tick import Delay
 from messages import SayText2
 from messages.hooks import HookUserMessage
@@ -38,10 +38,12 @@ fix_escaped_prefix_characters(CHAT_HOOK_CONFIG)
 
 for _color, _value in CHAT_HOOK_CONFIG.get('colors', {}).items():
     try:
+        # pylint: disable=undefined-variable
         globals()[_color] = Color(*map(int, _value.split(',')))
     except ValueError:
         warnings.warn(f'Invalid Color value "{_value}".')
 
+# pylint: disable=undefined-variable
 VALID_COLORS = {k: v for k, v in globals().items() if isinstance(v, Color)}
 
 
@@ -50,7 +52,7 @@ VALID_COLORS = {k: v for k, v in globals().items() if isinstance(v, Color)}
 # =============================================================================
 @HookUserMessage('SayText2')
 def _saytext2_hook(recipients, data):
-    """Hook SayText2 for chat messages to send a modified version."""
+    """Hooks SayText2 for chat messages to send a modified version."""
     key = data.message
 
     # Is this message from a player sending chat?

@@ -47,6 +47,7 @@ def get_user_and_permissions_prefixes(config):
 def fix_escaped_prefix_characters(config):
     """Update all prefixes to fix any escaped characters."""
     for group in config['groups'].values():
+        # pylint: disable=protected-access
         group['prefix'] = LangStrings._replace_escaped_sequences(
             group['prefix']
         )
@@ -123,5 +124,6 @@ def _create_config_file():
 
     with CHAT_HOOK_CONFIG_FILE.open('w') as open_file:
         json.dump(default, open_file, indent=4)
+
 
 _create_config_file()
