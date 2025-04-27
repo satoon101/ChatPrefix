@@ -58,7 +58,7 @@ def fix_escaped_prefix_characters(config):
 # =============================================================================
 def _create_config_file():
     """Create the config file if it does not already exist."""
-    if CHAT_HOOK_CONFIG_FILE.isfile():
+    if CHAT_HOOK_CONFIG_FILE.is_file():
         return
 
     if GAME_NAME == 'csgo':

@@ -26,7 +26,7 @@ __all__ = (
 # =============================================================================
 # >> GLOBAL VARIABLES
 # =============================================================================
-if (TRANSLATION_PATH / info.name / GAME_NAME + '_strings.ini').isfile():
+if (TRANSLATION_PATH / info.name / GAME_NAME + '_strings.ini').is_file():
     CHAT_STRINGS = LangStrings(f'{info.name}/{GAME_NAME}_strings')
 else:
     CHAT_STRINGS = LangStrings(f'{info.name}/strings')
