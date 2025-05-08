@@ -10,7 +10,7 @@ import json
 import warnings
 
 # Source.Python
-from colors import *  # pylint: disable=wildcard-import
+from colors import *  # noqa: F403
 from listeners.tick import Delay
 from messages import SayText2
 from messages.hooks import HookUserMessage
@@ -18,11 +18,11 @@ from players.entity import Player
 
 # Plugin
 from .config import (
-    CHAT_HOOK_CONFIG_FILE, fix_escaped_prefix_characters,
+    CHAT_HOOK_CONFIG_FILE,
+    fix_escaped_prefix_characters,
     get_user_and_permissions_prefixes,
 )
 from .strings import CHAT_STRINGS, LOCATION_STRINGS
-
 
 # =============================================================================
 # >> GLOBAL VARIABLES
@@ -31,32 +31,35 @@ with CHAT_HOOK_CONFIG_FILE.open() as _json:
     CHAT_HOOK_CONFIG = json.load(_json)
 
 USER_PREFIXES, PERMISSION_PREFIXES = get_user_and_permissions_prefixes(
-    CHAT_HOOK_CONFIG
+    CHAT_HOOK_CONFIG,
 )
 
 fix_escaped_prefix_characters(CHAT_HOOK_CONFIG)
 
-for _color, _value in CHAT_HOOK_CONFIG.get('colors', {}).items():
+for _color, _value in CHAT_HOOK_CONFIG.get("colors", {}).items():
     try:
-        # pylint: disable=undefined-variable
-        globals()[_color] = Color(*map(int, _value.split(',')))
+        # ruff: noqa: F405
+        globals()[_color] = Color(*map(int, _value.split(",")))
     except ValueError:
-        warnings.warn(f'Invalid Color value "{_value}".')
+        warnings.warn(
+            f'Invalid Color value "{_value}".',
+            stacklevel=2,
+        )
 
-# pylint: disable=undefined-variable
+# ruff: noqa: F405
 VALID_COLORS = {k: v for k, v in globals().items() if isinstance(v, Color)}
 
 
 # =============================================================================
 # >> USER MESSAGE HOOKS
 # =============================================================================
-@HookUserMessage('SayText2')
+@HookUserMessage("SayText2")
 def _saytext2_hook(recipients, data):
     """Hooks SayText2 for chat messages to send a modified version."""
     key = data.message
 
     # Is this message from a player sending chat?
-    if key not in CHAT_STRINGS.keys():
+    if key not in CHAT_STRINGS:
         return
 
     # Does the chatting player belong to any group?
@@ -65,16 +68,16 @@ def _saytext2_hook(recipients, data):
     if group is None:
         return
 
-    full_prefix = CHAT_HOOK_CONFIG['groups'][group]['prefix']
+    full_prefix = CHAT_HOOK_CONFIG["groups"][group]["prefix"]
     tokens = {
-        'data': data,
-        'prefix': full_prefix.format(**VALID_COLORS),
+        "data": data,
+        "prefix": full_prefix.format(**VALID_COLORS),
     }
 
     # Add the location information if it is needed
     location = LOCATION_STRINGS.get(data.param3, data.param3)
     if location:
-        tokens['location'] = location
+        tokens["location"] = location
 
     # Use a delay to avoid crashing the server
     Delay(0, _send_new_message, (key, index, list(recipients)), tokens)
